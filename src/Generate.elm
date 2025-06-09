@@ -6,6 +6,7 @@ import Element exposing (Column)
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (onClick, onInput)
+import Http
 import Json.Decode exposing (Decoder, decodeString, dict, int)
 import Portals exposing (portalsList)
 import Task exposing (Task)
@@ -35,21 +36,28 @@ type alias Model =
 init : () -> ( Model, Cmd Msg )
 init _ =
     let
-        jsonString =
-            portalsList
-
-        decodedPortals =
-            decodeString portalDecoder jsonString
-
         setPortalCmd =
             Task.perform (always (SetPortal "All Portals")) (Task.succeed ())
     in
-    case decodedPortals of
-        Ok portals ->
-            ( { portal = Just -999, issue = Nothing, width = "wide", keyword = "", elements = 4, order = "recent", portals = portals, error = Nothing }, setPortalCmd )
+    ( { portal = Just -999
+      , issue = Nothing
+      , keyword = ""
+      , elements = 2
+      , order = "recent"
+      , portals = Dict.empty
+      , width = "wide"
+      , error = Nothing
+      }
+    , Cmd.batch [ fetchPortals, setPortalCmd ]
+    )
 
-        Err error ->
-            ( { portal = Nothing, issue = Nothing, width = "wide", keyword = "", elements = 2, order = "recent", portals = Dict.empty, error = Just (errorToString error) }, Cmd.none )
+
+
+-- case decodedPortals of
+--     Ok portals ->
+--         ( { portal = Just -999, issue = Nothing, width = "wide", keyword = "", elements = 4, order = "recent", portals = portals, error = Nothing }, setPortalCmd )
+--     Err error ->
+--         ( { portal = Nothing, issue = Nothing, width = "wide", keyword = "", elements = 2, order = "recent", portals = Dict.empty, error = Just (errorToString error) }, Cmd.none )
 
 
 type Msg
@@ -61,6 +69,7 @@ type Msg
     | SetPortal String
     | SetIssueID String
     | FetchData
+    | GotPortals (Result Http.Error (Dict String Int))
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -101,6 +110,14 @@ update msg model =
 
         FetchData ->
             ( model, Cmd.none )
+
+        GotPortals result ->
+            case result of
+                Ok portals ->
+                    ( { model | portals = portals, error = Nothing }, Cmd.none )
+
+                Err error ->
+                    ( { model | error = Just (httpErrorToString error) }, Cmd.none )
 
 
 errorToString : Json.Decode.Error -> String
@@ -268,6 +285,42 @@ portalIdToString id =
 
         Nothing ->
             ""
+
+
+type alias Portals =
+    Dict.Dict String Int
+
+
+portalsDecoder : Decoder Portals
+portalsDecoder =
+    Json.Decode.dict Json.Decode.int
+
+
+fetchPortals : Cmd Msg
+fetchPortals =
+    Http.get
+        { url = "all_portals.json"
+        , expect = Http.expectJson (always FetchData) portalsDecoder
+        }
+
+
+httpErrorToString : Http.Error -> String
+httpErrorToString error =
+    case error of
+        Http.BadUrl url ->
+            "Bad URL: " ++ url
+
+        Http.Timeout ->
+            "Request timed out"
+
+        Http.NetworkError ->
+            "Network error occurred"
+
+        Http.BadStatus status ->
+            "Bad status: " ++ String.fromInt status
+
+        Http.BadBody body ->
+            "Bad body: " ++ body
 
 
 main : Program () Model Msg
