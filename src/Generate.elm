@@ -117,6 +117,10 @@ update msg model =
                     ( { model | portals = portals, error = Nothing }, Cmd.none )
 
                 Err error ->
+                    let
+                        _ =
+                            Debug.log "Error fetching portals" (httpErrorToString error)
+                    in
                     ( { model | error = Just (httpErrorToString error) }, Cmd.none )
 
 
@@ -300,7 +304,7 @@ fetchPortals : Cmd Msg
 fetchPortals =
     Http.get
         { url = "all_portals.json"
-        , expect = Http.expectJson (always FetchData) portalsDecoder
+        , expect = Http.expectJson GotPortals portalsDecoder
         }
 
 
