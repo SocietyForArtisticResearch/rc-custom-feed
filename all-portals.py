@@ -1,9 +1,8 @@
 import json
 
-with open('rc.json', 'r') as file:
-    dataset = json.load(file)
-    
-data = dataset['rc']
+with open('/var/www/html/internal_research.json', 'r') as file:
+    data = json.load(file)
+
 
 portals = {}
 
