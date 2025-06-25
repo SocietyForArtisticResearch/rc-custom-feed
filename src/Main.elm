@@ -121,6 +121,18 @@ parametersFromAppUrl url =
             |> Maybe.andThen String.toInt
         )
         (Dict.get
+            "expositionID"
+            url.queryParameters
+            |> Maybe.andThen List.head
+            |> Maybe.map
+                (\str ->
+                    String.split "," str
+                        -- Split the string by commas
+                        |> List.filterMap String.toInt
+                 -- Convert each value to an Int, ignoring invalid entries
+                )
+        )
+        (Dict.get
             "feed"
             url.queryParameters
             |> Maybe.andThen List.head
@@ -174,6 +186,7 @@ type alias Parameters =
     , order : Maybe String
     , portal : Maybe String
     , issue : Maybe Int
+    , expositionID : Maybe (List Int)
     , feed : Feed
     , mode : Mode
     }
@@ -281,13 +294,21 @@ update msg model =
             let
                 --_ =
                 --    Debug.log "parameters" model.parameters
-                expositions =
+                filteredByIssue =
                     case model.parameters.issue of
                         Just id ->
                             List.filter (isExpositionInIssue id) exps
 
                         Nothing ->
                             exps
+
+                expositions =
+                    case model.parameters.expositionID of
+                        Just expoIds ->
+                            List.filter (\exposition -> List.any (\expoId -> isExpositionWithId expoId exposition) expoIds) filteredByIssue
+
+                        Nothing ->
+                            filteredByIssue
 
                 --_ =
                 --    Debug.log "filtered expositions" expositions
@@ -364,6 +385,11 @@ isExpositionInIssue issueID exp =
 
         Nothing ->
             False
+
+
+isExpositionWithId : Int -> Exposition -> Bool
+isExpositionWithId expoId exposition =
+    exposition.id == expoId
 
 
 
