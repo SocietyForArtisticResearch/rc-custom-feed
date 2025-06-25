@@ -124,12 +124,18 @@ parametersFromAppUrl url =
             "expositionID"
             url.queryParameters
             |> Maybe.andThen List.head
-            |> Maybe.map
+            |> Maybe.andThen
                 (\str ->
-                    String.split "," str
-                        -- Split the string by commas
-                        |> List.filterMap String.toInt
-                 -- Convert each value to an Int, ignoring invalid entries
+                    if String.isEmpty str then
+                        Nothing
+                        -- Return `Nothing` if the string is empty
+
+                    else
+                        Just
+                            (String.split "," str
+                                |> List.filterMap String.toInt
+                             -- Convert each value to an Int, ignoring invalid entries
+                            )
                 )
         )
         (Dict.get
@@ -571,8 +577,13 @@ viewResearch model wi columns feed exp =
         portal =
             maybeStrToStr model.parameters.portal
 
+        expoIDs =
+            model.parameters.expositionID
+                |> Maybe.map (\ids -> String.join "," (List.map String.fromInt ids))
+                |> maybeStrToStr
+
         url =
-            "https://rcfeed.rcdata.org/?keyword=" ++ kw ++ "&elements=" ++ String.fromInt elem ++ "&order=" ++ order ++ "&portal=" ++ portal ++ "&issue=" ++ issue
+            "https://localhost:8080/?keyword=" ++ kw ++ "&elements=" ++ String.fromInt elem ++ "&order=" ++ order ++ "&portal=" ++ portal ++ "&issue=" ++ issue ++ "&expositionID=" ++ expoIDs
 
         fullUrl =
             div ++ url ++ endDiv
