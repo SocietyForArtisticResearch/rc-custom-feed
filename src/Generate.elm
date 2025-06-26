@@ -30,6 +30,7 @@ type alias Model =
     , portals : PortalDict
     , width : String
     , error : Maybe String
+    , expositionID : Maybe String
     }
 
 
@@ -47,6 +48,7 @@ init _ =
       , portals = Dict.empty
       , width = "wide"
       , error = Nothing
+      , expositionID = Nothing
       }
     , Cmd.batch [ fetchPortals, setPortalCmd ]
     )
@@ -68,6 +70,7 @@ type Msg
     | SetIframeWidth String
     | SetPortal String
     | SetIssueID String
+    | SetExpositionIDs String
     | FetchData
     | GotPortals (Result Http.Error (Dict String Int))
 
@@ -104,6 +107,13 @@ update msg model =
         SetIssueID issueID ->
             ( { model
                 | issue = String.toInt issueID
+              }
+            , Cmd.none
+            )
+
+        SetExpositionIDs expositionIDs ->
+            ( { model
+                | expositionID = Just expositionIDs -- Store the raw string in the model
               }
             , Cmd.none
             )
@@ -151,9 +161,27 @@ view model =
                 Nothing ->
                     ""
 
-        url =
-            "https://rcfeed.rcdata.org/?keyword=" ++ model.keyword ++ "&elements=" ++ String.fromInt model.elements ++ "&order=" ++ model.order ++ "&portal=" ++ portalAsString ++ "&issue=" ++ issueID ++ "&feed=" ++ model.width
+        expositionIDsAsList =
+            case model.expositionID of
+                Just idsString ->
+                    String.split "," idsString
+                        |> List.filterMap String.toInt
 
+                Nothing ->
+                    []
+
+        expositionID =
+            case model.expositionID of
+                Just ids ->
+                    String.join "," (List.map String.fromInt expositionIDsAsList)
+
+                Nothing ->
+                    ""
+
+        url =
+            "https://rcfeed.rcdata.org/?keyword=" ++ model.keyword ++ "&elements=" ++ String.fromInt model.elements ++ "&order=" ++ model.order ++ "&portal=" ++ portalAsString ++ "&issue=" ++ issueID ++ "&expositionID=" ++ expositionID ++ "&feed=" ++ model.width
+
+        --"http://localhost:8080/?keyword=rc" ++ model.keyword ++ "&elements=" ++ String.fromInt model.elements ++ "&order=" ++ model.order ++ "&portal=" ++ portalAsString ++ "&issue=" ++ issueID ++ "&expositionID=" ++ expositionID ++ "&feed=" ++ model.width
         maxElementsWithTitle =
             if model.width == "column" then
                 7
@@ -217,6 +245,13 @@ view model =
             (withSpacing
                 [ text "Keyword: "
                 , input [ placeholder "Type your keyword here", value model.keyword, onInput UpdateKeyword ] []
+                , text "Exposition ID: "
+                , input
+                    [ placeholder "ID"
+                    , value (Maybe.withDefault "" model.expositionID) -- Display the raw string in the input field
+                    , onInput SetExpositionIDs -- Pass the raw string to the handler
+                    ]
+                    []
                 , text "Number of Elements to Display: "
                 , button [ onClick Decrement ] [ text "-" ]
                 , text (String.fromInt model.elements)
