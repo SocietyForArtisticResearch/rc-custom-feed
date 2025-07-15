@@ -583,7 +583,7 @@ viewResearch model wi columns feed exp =
                 |> maybeStrToStr
 
         url =
-            "https://localhost:8080/?keyword=" ++ kw ++ "&elements=" ++ String.fromInt elem ++ "&order=" ++ order ++ "&portal=" ++ portal ++ "&issue=" ++ issue ++ "&expositionID=" ++ expoIDs
+            "https://rcfeed.rcdata.org/?keyword=" ++ kw ++ "&elements=" ++ String.fromInt elem ++ "&order=" ++ order ++ "&portal=" ++ portal ++ "&issue=" ++ issue ++ "&expositionID=" ++ expoIDs
 
         fullUrl =
             div ++ url ++ endDiv
