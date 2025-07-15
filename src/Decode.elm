@@ -67,18 +67,7 @@ expositionDecoder =
     Json.Decode.map7 Exposition
         (Json.Decode.field "abstract" Json.Decode.string)
         --(Json.Decode.field "default-page" Json.Decode.string)
-        (Json.Decode.field "id" Json.Decode.string
-            |> Json.Decode.andThen
-                (\str ->
-                    case String.toInt str of
-                        Just int ->
-                            Json.Decode.succeed int
-
-                        -- Successfully convert the string to an Int
-                        Nothing ->
-                            Json.Decode.fail "Expected a string that can be converted to an Int"
-                )
-        )
+        (Json.Decode.field "id" Json.Decode.int)
         --(Json.Decode.field "keywords" <| Json.Decode.list Json.Decode.string)
         --(Json.Decode.field "published_in" <| Json.Decode.list publicationDecoder)
         (Json.Decode.field "author" authorDecoder)
