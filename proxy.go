@@ -9,7 +9,7 @@ import (
 )
 
 const (
-	TargetURL = "https://www.researchcatalogue.net/portal/search-result?fulltext=&title=&autocomplete=&keyword=%s&portal=%s&statusprogress=0&statusprogress=1&statuspublished=0&statuspublished=1&includelimited=0&includelimited=1&includeprivate=0&includeprivate=1&type_research=research&resulttype=research&modifiedafter=&modifiedbefore=&format=json&limit=250&page=0"
+	TargetURL = "https://www.researchcatalogue.net/portal/search-result?fulltext=&title=&autocomplete=&keyword=%s&portal=%s&statusprogress=0&statuspublished=0&includelimited=0&includeprivate=0&type_research=research&resulttype=research&modifiedafter=&modifiedbefore=&format=json&limit=250&page=0"
 	Port      = ":3000"
 )
 
