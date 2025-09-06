@@ -990,20 +990,12 @@ viewMobile w columns exp =
                         }
                     ]
                 , paragraph
-                    [ --Background.color (rgb255 0 250 160)
-                      Element.centerX
+                    [ Element.centerX
                     , Font.center
                     , Font.size (fontSize - 1)
-
-                    --, Font.size (20 - columns)
                     , Element.paddingEach { defaultPadding | bottom = 24 }
                     ]
-                    [ Element.newTabLink
-                        []
-                        { url = authorLink exposition.author.id
-                        , label = Element.text exposition.author.name
-                        }
-                    ]
+                    (authorLinks exposition.author exposition.coauthors)
                 , paragraph
                     [ --, Background.color (rgb255 160 250 100)
                       Element.centerX
