@@ -1,23 +1,17 @@
-module Decode exposing (Exposition, expositionsDecoder)
+module Decode exposing (Author, Exposition, expositionsDecoder)
 
 import Json.Decode exposing (..)
 
 
 type alias Exposition =
     { abstract : String
-
-    --, defaultPage : String
     , id : Int
-
-    --, keywords : List String
-    --, publication : List Publication
     , author : Author
+    , coauthors : List Author
     , thumb : Maybe String
     , title : String
     , url : String
     , issue : Maybe Issue
-
-    --, type_ : String
     }
 
 
@@ -64,15 +58,12 @@ issueDecoder =
 
 expositionDecoder : Json.Decode.Decoder Exposition
 expositionDecoder =
-    Json.Decode.map7 Exposition
+    Json.Decode.map8 Exposition
         (Json.Decode.field "abstract" Json.Decode.string)
-        --(Json.Decode.field "default-page" Json.Decode.string)
         (Json.Decode.field "id" Json.Decode.int)
-        --(Json.Decode.field "keywords" <| Json.Decode.list Json.Decode.string)
-        --(Json.Decode.field "published_in" <| Json.Decode.list publicationDecoder)
         (Json.Decode.field "author" authorDecoder)
+        (Json.Decode.field "coauthors" (Json.Decode.list authorDecoder))
         (Json.Decode.maybe (Json.Decode.field "thumb" Json.Decode.string))
-        --(Json.Decode.field "meta-data-page" Json.Decode.string)
         (Json.Decode.field "title" Json.Decode.string)
         (Json.Decode.field "default-page" Json.Decode.string)
         (Json.Decode.maybe (Json.Decode.field "issue" issueDecoder))
