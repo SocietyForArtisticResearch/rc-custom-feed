@@ -749,6 +749,29 @@ defaultPageFromUrl str =
     expositionPath
 
 
+authorLinks : Author -> List Author -> List (Element Msg)
+authorLinks author coauthors =
+    let
+        mainLink =
+            Element.newTabLink []
+                { url = authorLink author.id
+                , label = Element.text (Debug.log "Main author" author |> .name)
+                }
+
+        coauthorLinks =
+            coauthors
+                |> Debug.log "Coauthors"
+                |> List.map
+                    (\a ->
+                        Element.newTabLink []
+                            { url = authorLink a.id
+                            , label = Element.text a.name
+                            }
+                    )
+    in
+    List.intersperse (Element.text ", ") (mainLink :: coauthorLinks)
+
+
 viewTitle : Int -> Int -> Maybe Exposition -> Element Msg
 viewTitle w columns exp =
     let
@@ -820,18 +843,12 @@ viewTitleAuthor w columns exp =
                         }
                     ]
                 , paragraph
-                    [ --Background.color (rgb255 0 250 160)
-                      Element.centerX
+                    [ Element.centerX
                     , Font.center
                     , Font.size (fontSize - 1)
                     , Element.paddingEach { defaultPadding | bottom = 24 }
                     ]
-                    [ Element.newTabLink
-                        []
-                        { url = authorLink exposition.author.id
-                        , label = Element.text exposition.author.name
-                        }
-                    ]
+                    (authorLinks exposition.author exposition.coauthors)
                 ]
 
         Nothing ->
@@ -898,20 +915,12 @@ viewTitleAuthorAbstract w columns exp =
                         }
                     ]
                 , paragraph
-                    [ --Background.color (rgb255 0 250 160)
-                      Element.centerX
+                    [ Element.centerX
                     , Font.center
                     , Font.size (fontSize - 1)
-
-                    --, Font.size (20 - columns)
                     , Element.paddingEach { defaultPadding | bottom = 24 }
                     ]
-                    [ Element.newTabLink
-                        []
-                        { url = authorLink exposition.author.id
-                        , label = Element.text exposition.author.name
-                        }
-                    ]
+                    (authorLinks exposition.author exposition.coauthors)
                 , paragraph
                     [ --, Background.color (rgb255 160 250 100)
                       Element.centerX
