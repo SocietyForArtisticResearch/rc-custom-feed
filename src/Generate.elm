@@ -200,14 +200,14 @@ view model =
             if model.width == "column" then
                 div []
                     [ iframe
-                        [ src (url ++ "&mode=generate"), style "width" "100%", style "max-width" "1024px", height iframeHeight ]
+                        [ src (url ++ "&mode=generate"), style "width" "100%", style "max-width" "1024px", height (iframeHeight + 100) ]
                         []
                     ]
 
             else
                 div []
                     [ iframe
-                        [ src (url ++ "&mode=generate"), style "width" "100%", height iframeHeight ]
+                        [ src (url ++ "&mode=generate"), style "width" "100%", height (iframeHeight + 100) ]
                         []
                     ]
 
@@ -229,6 +229,21 @@ view model =
             [ h1 []
                 [ text "Generate Feed" ]
             ]
+        , div
+            [ style "max-width" "700px"
+            , style "margin" "0 auto"
+            ]
+            [ text "This tool generates custom feeds for your RC portal. A feed represents a collection of expositions that is rendered as one single scrollable carousel. Feeds allow to group expositions by keyword and issue, and to customise the way they are displayed in your portal page. Once a feed is created, it will dynamically update when new expositions are added to your portal. Usage in the RC is explained "
+            , a [ attribute "href" "https://www.researchcatalogue.net/view/2639908/2889569" ]
+                [ text "here"
+                ]
+            , text ". Please note that page level CSS is required for the iframe to be responsive. This is available at "
+            , a [ attribute "href" "https://github.com/SocietyForArtisticResearch/rc-custom-feed/blob/master/README.md#page-level-css" ]
+                [ text "here"
+                ]
+            , text "."
+            ]
+        , br [] []
         , div []
             (withSpacing
                 [ text "Portal: "
@@ -261,16 +276,6 @@ view model =
                     (List.map orderOption [ "recent", "random" ])
                 ]
             )
-        , br [] []
-        , div []
-            [ text "Please note that page level CSS is required for the iframe to be responsive. This is available at "
-            , a [ attribute "href" "https://github.com/SocietyForArtisticResearch/rc-custom-feed/blob/master/README.md#page-level-css" ]
-                [ text "here"
-                , text "."
-                ]
-            ]
-
-        --, div [ style "width" "100%" ] [ citableIframe ("<div class=\"contdiv" ++ String.fromInt model.elements ++ "\"><iframe src=" ++ q url ++ " style=\"border: none;\"></iframe></div>") ]
         , br [] []
         , iFrameDiv
         ]
