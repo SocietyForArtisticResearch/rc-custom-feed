@@ -3,6 +3,12 @@
   <desc id="desc">A neutral placeholder shown when an exposition thumbnail cannot be loaded.</desc>
   <rect width="500" height="500" fill="#ffffff"/>
   <rect x="85" y="85" width="330" height="330" fill="#e2e2e2"/>
-  <path d="M85 342c42-41 77-133 126-106 40 22 51 102 98 78 54-27 72-127 106-111v212H85z" fill="#b5b5b5"/>
-  <path d="M85 415v-58c40-35 73-79 117-61 44 18 62 72 107 54 44-18 70-81 106-75v140H85z" fill="#747474"/>
+  <clipPath id="preview">
+    <rect x="85" y="85" width="330" height="330"/>
+  </clipPath>
+  <g clip-path="url(#preview)">
+    <path d="M25 335 155 205h110L135 335z" fill="#b5b5b5"/>
+    <path d="M135 415 315 235h110L245 415z" fill="#939393"/>
+    <path d="M255 415 415 255v110L365 415z" fill="#747474"/>
+  </g>
 </svg>
