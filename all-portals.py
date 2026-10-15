@@ -7,13 +7,13 @@ with open('/var/www/html/internal_research.json', 'r') as file:
 portals = {}
 
 for entry in data:
-    if 'published_in' in entry:
-        for item in entry['published_in']:
-            if 'name' in item:
-                portals[item['name']] = item['id']
+    for field in ('published_in', 'connected_to'):
+        items = entry.get(field, [])
 
-    if 'connected_to' in entry:
-        for item in entry['connected_to']:
+        if isinstance(items, dict):
+            items = [items]
+
+        for item in items:
             if 'name' in item:
                 portals[item['name']] = item['id']
 
