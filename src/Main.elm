@@ -185,7 +185,7 @@ type alias Model =
 
 
 type View
-    = Error
+    = Error String
     | Carousel
 
 
@@ -351,7 +351,7 @@ update msg model =
                 _ =
                     Debug.log "error" error
             in
-            ( { model | view = Error }, Cmd.none )
+            ( { model | view = Error (httpErrorMessage error) }, Cmd.none )
 
         NextExposition ->
             ( { model | expositions = Carousel.next model.expositions }, Cmd.none )
@@ -364,6 +364,25 @@ update msg model =
 
         ThumbnailFailed url ->
             ( { model | failedThumbnailUrls = url :: model.failedThumbnailUrls }, Cmd.none )
+
+
+httpErrorMessage : Http.Error -> String
+httpErrorMessage error =
+    case error of
+        Http.BadUrl url ->
+            "The data request URL is invalid: " ++ url
+
+        Http.Timeout ->
+            "The data request timed out. Please try again."
+
+        Http.NetworkError ->
+            "The data service could not be reached. Check your network connection and local development server."
+
+        Http.BadStatus status ->
+            "The data service returned HTTP status " ++ String.fromInt status ++ "."
+
+        Http.BadBody details ->
+            "The data service returned an unexpected response: " ++ details
 
 
 sendQuery : Release -> String -> String -> Cmd Msg
@@ -445,12 +464,8 @@ view model =
                         )
                     ]
 
-                Error ->
-                    let
-                        url =
-                            baseUrl model.release
-                    in
-                    [ layout [ width fill ] (Element.text <| "bad query. you must provide keyword, number of elements and order. example: " ++ url ++ "?keyword=rc&elements=20&order=recent") ]
+                Error message ->
+                    [ layout [ width fill ] (Element.text message) ]
     in
     { title = "custom-feed"
     , body = content
@@ -1017,6 +1032,27 @@ viewMobile w columns exp =
             Element.text "Waiting for exposition..."
 
 
+thumbnailImage : Int -> String -> String -> Element Msg
+thumbnailImage imageHeight imageSource originalImage =
+    el
+        [ width fill
+        , height (px imageHeight)
+        ]
+        (Element.html
+            (Html.img
+                [ Html.Attributes.src imageSource
+                , Html.Attributes.alt ""
+                , Html.Attributes.style "display" "block"
+                , Html.Attributes.style "width" "100%"
+                , Html.Attributes.style "height" "100%"
+                , Html.Attributes.style "object-fit" "cover"
+                , Html.Events.on "error" (Json.Decode.succeed (ThumbnailFailed originalImage))
+                ]
+                []
+            )
+        )
+
+
 viewExpositionColumn : List String -> Int -> Int -> Maybe Exposition -> Element Msg
 viewExpositionColumn failedThumbnailUrls w columns exp =
     case exp of
@@ -1046,9 +1082,6 @@ viewExpositionColumn failedThumbnailUrls w columns exp =
                 imgHeight =
                     round (toFloat w / toFloat (columns + 1))
 
-                imageHeight =
-                    px imgHeight
-
                 --px (round (toFloat w / 4))
                 --px (200 + (500 // amountOfText * 20))
             in
@@ -1071,14 +1104,7 @@ viewExpositionColumn failedThumbnailUrls w columns exp =
                         []
                         { url = exposition.url --image
                         , label =
-                            Element.image
-                                [ Element.htmlAttribute (Html.Events.on "error" (Json.Decode.succeed (ThumbnailFailed image)))
-                                , width fill
-                                , height imageHeight
-                                ]
-                                { src = imageSource
-                                , description = "" --image ++ " preview image of the exposition"
-                                }
+                            thumbnailImage imgHeight imageSource image
                         }
                     )
                 , if w > 674 then
@@ -1134,9 +1160,6 @@ viewExpositionWide failedThumbnailUrls w columns exp =
                 _ =
                     Debug.log "imgHeight" imgHeight
 
-                imageHeight =
-                    px imgHeight
-
                 --px (round (toFloat w / 4))
                 --px (200 + (500 // amountOfText * 20))
             in
@@ -1159,14 +1182,7 @@ viewExpositionWide failedThumbnailUrls w columns exp =
                         []
                         { url = exposition.url --image
                         , label =
-                            Element.image
-                                [ Element.htmlAttribute (Html.Events.on "error" (Json.Decode.succeed (ThumbnailFailed image)))
-                                , width fill
-                                , height imageHeight
-                                ]
-                                { src = imageSource
-                                , description = "" --image ++ " preview image of the exposition"
-                                }
+                            thumbnailImage imgHeight imageSource image
                         }
                     )
                 , if imgHeight < 150 then
