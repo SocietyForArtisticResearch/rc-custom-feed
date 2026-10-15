@@ -15,6 +15,7 @@ import Element.Font as Font
 import Element.Input as Input
 import Html exposing (br)
 import Html.Attributes
+import Html.Events
 import Http
 import Json.Decode exposing (Error(..))
 import Random
@@ -167,6 +168,7 @@ type Msg
     | PreviousExposition
     | DataReceived (Result Http.Error (List Exposition))
     | WindowWasResized Int Int
+    | ThumbnailFailed String
 
 
 type alias Model =
@@ -178,6 +180,7 @@ type alias Model =
     , windowSize : { w : Int, h : Int }
     , release : Release
     , results : Int
+    , failedThumbnailUrls : List String
     }
 
 
@@ -272,6 +275,7 @@ init config url navKey =
             , windowSize = { w = cfg.width, h = cfg.height }
             , release = cfg.release
             , results = 0
+            , failedThumbnailUrls = []
             }
 
         --_ =
@@ -357,6 +361,9 @@ update msg model =
 
         WindowWasResized w h ->
             ( { model | windowSize = { w = w, h = h } }, Cmd.none )
+
+        ThumbnailFailed url ->
+            ( { model | failedThumbnailUrls = url :: model.failedThumbnailUrls }, Cmd.none )
 
 
 sendQuery : Release -> String -> String -> Cmd Msg
@@ -473,10 +480,10 @@ viewResearch model wi columns feed exp =
         viewExposition =
             case feed of
                 Wide ->
-                    viewExpositionWide
+                    viewExpositionWide model.failedThumbnailUrls
 
                 Column ->
-                    viewExpositionColumn
+                    viewExpositionColumn model.failedThumbnailUrls
 
         buttonWidth =
             30
@@ -1010,8 +1017,8 @@ viewMobile w columns exp =
             Element.text "Waiting for exposition..."
 
 
-viewExpositionColumn : Int -> Int -> Maybe Exposition -> Element Msg
-viewExpositionColumn w columns exp =
+viewExpositionColumn : List String -> Int -> Int -> Maybe Exposition -> Element Msg
+viewExpositionColumn failedThumbnailUrls w columns exp =
     case exp of
         Just exposition ->
             let
@@ -1025,6 +1032,13 @@ viewExpositionColumn w columns exp =
 
                         _ ->
                             Maybe.withDefault "" exposition.thumb
+
+                imageSource =
+                    if List.member image failedThumbnailUrls then
+                        "assets/thumbnail-placeholder.svg"
+
+                    else
+                        image
 
                 --amountOfText =
                 --String.length shortAbstract + String.length exposition.title
@@ -1058,10 +1072,11 @@ viewExpositionColumn w columns exp =
                         { url = exposition.url --image
                         , label =
                             Element.image
-                                [ width fill
+                                [ Element.htmlAttribute (Html.Events.on "error" (Json.Decode.succeed (ThumbnailFailed image)))
+                                , width fill
                                 , height imageHeight
                                 ]
-                                { src = image
+                                { src = imageSource
                                 , description = "" --image ++ " preview image of the exposition"
                                 }
                         }
@@ -1087,8 +1102,8 @@ viewExpositionColumn w columns exp =
             Element.text "Loading..."
 
 
-viewExpositionWide : Int -> Int -> Maybe Exposition -> Element Msg
-viewExpositionWide w columns exp =
+viewExpositionWide : List String -> Int -> Int -> Maybe Exposition -> Element Msg
+viewExpositionWide failedThumbnailUrls w columns exp =
     case exp of
         Just exposition ->
             let
@@ -1102,6 +1117,13 @@ viewExpositionWide w columns exp =
 
                         _ ->
                             Maybe.withDefault "" exposition.thumb
+
+                imageSource =
+                    if List.member image failedThumbnailUrls then
+                        "assets/thumbnail-placeholder.svg"
+
+                    else
+                        image
 
                 --amountOfText =
                 --String.length shortAbstract + String.length exposition.title
@@ -1138,10 +1160,11 @@ viewExpositionWide w columns exp =
                         { url = exposition.url --image
                         , label =
                             Element.image
-                                [ width fill
+                                [ Element.htmlAttribute (Html.Events.on "error" (Json.Decode.succeed (ThumbnailFailed image)))
+                                , width fill
                                 , height imageHeight
                                 ]
-                                { src = image
+                                { src = imageSource
                                 , description = "" --image ++ " preview image of the exposition"
                                 }
                         }
