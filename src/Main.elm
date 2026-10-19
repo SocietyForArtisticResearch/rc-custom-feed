@@ -3,6 +3,7 @@ module Main exposing (main, release, shuffleWithSeed)
 import AppUrl exposing (AppUrl)
 import Array
 import Browser exposing (UrlRequest(..))
+import Browser.Dom
 import Browser.Events
 import Browser.Navigation as Nav
 import Carousel exposing (Carousel)
@@ -18,10 +19,12 @@ import Html.Attributes
 import Html.Events
 import Http
 import Json.Decode exposing (Error(..))
+import Process
 import Random
 import Random.List exposing (shuffle)
 import Simple.Transition as Transition
 import String.Extra
+import Task
 import Url exposing (Url)
 
 
@@ -168,6 +171,7 @@ type Msg
     | PreviousExposition
     | DataReceived (Result Http.Error (List Exposition))
     | WindowWasResized Int Int
+    | ViewportMeasured (Result Browser.Dom.Error Browser.Dom.Viewport)
     | ThumbnailFailed String
 
 
@@ -272,7 +276,10 @@ init config url navKey =
             , parameters = parametersFromAppUrl (AppUrl.fromUrl url)
             , view = Carousel
             , seed = cfg.seed
-            , windowSize = { w = cfg.width, h = cfg.height }
+            , windowSize =
+                { w = max 1 cfg.width
+                , h = max 1 cfg.height
+                }
             , release = cfg.release
             , results = 0
             , failedThumbnailUrls = []
@@ -281,7 +288,12 @@ init config url navKey =
         --_ =
         --    Debug.log "model" model
     in
-    ( model, sendQuery cfg.release (Maybe.withDefault "Nothing" model.parameters.keyword) (Maybe.withDefault "Nothing" model.parameters.portal) )
+    ( model
+    , Cmd.batch
+        [ sendQuery cfg.release (Maybe.withDefault "Nothing" model.parameters.keyword) (Maybe.withDefault "Nothing" model.parameters.portal)
+        , measureViewport
+        ]
+    )
 
 
 
@@ -360,10 +372,59 @@ update msg model =
             ( { model | expositions = Carousel.previous model.expositions }, Cmd.none )
 
         WindowWasResized w h ->
-            ( { model | windowSize = { w = w, h = h } }, Cmd.none )
+            if w > 0 then
+                ( { model
+                    | windowSize =
+                        { w = w
+                        , h =
+                            if h > 0 then
+                                h
+
+                            else
+                                model.windowSize.h
+                        }
+                  }
+                , Cmd.none
+                )
+
+            else
+                ( model, measureViewport )
+
+        ViewportMeasured result ->
+            case result of
+                Ok viewport ->
+                    let
+                        width =
+                            round viewport.viewport.width
+
+                        height =
+                            round viewport.viewport.height
+                    in
+                    if width > 0 && height > 0 then
+                        ( { model | windowSize = { w = width, h = height } }, Cmd.none )
+
+                    else
+                        ( model, retryViewportMeasurement )
+
+                Err _ ->
+                    ( model, retryViewportMeasurement )
 
         ThumbnailFailed url ->
             ( { model | failedThumbnailUrls = url :: model.failedThumbnailUrls }, Cmd.none )
+
+
+measureViewport : Cmd Msg
+measureViewport =
+    Browser.Dom.getViewport
+        |> Task.attempt ViewportMeasured
+
+
+retryViewportMeasurement : Cmd Msg
+retryViewportMeasurement =
+    Task.succeed ()
+        |> Task.andThen (\_ -> Process.sleep 100)
+        |> Task.andThen (\_ -> Browser.Dom.getViewport)
+        |> Task.attempt ViewportMeasured
 
 
 httpErrorMessage : Http.Error -> String
